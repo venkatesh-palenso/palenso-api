@@ -45,31 +45,31 @@ CORS_ALLOW_ALL_ORIGINS = True
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-sentry_sdk.init(
-    dsn="""",
-    integrations=[DjangoIntegration(), RedisIntegration()],
-    # If you wish to associate users to errors (assuming you are using
-    # django.contrib.auth) you may enable sending PII data.
-    traces_sample_rate=0.7,
-    send_default_pii=True,
-    environment="production",
-)
+# sentry_sdk.init(
+#     dsn="",
+#     integrations=[DjangoIntegration(), RedisIntegration()],
+#     # If you wish to associate users to errors (assuming you are using
+#     # django.contrib.auth) you may enable sending PII data.
+#     traces_sample_rate=0.7,
+#     send_default_pii=True,
+#     environment="production",
+# )
 
 # The AWS region to connect to.
 AWS_REGION = "us-east-1"
 
 # The AWS access key to use.
-AWS_ACCESS_KEY_ID = """"
+AWS_ACCESS_KEY_ID = ""
 
 # The AWS secret access key to use.
-AWS_SECRET_ACCESS_KEY = """"
+AWS_SECRET_ACCESS_KEY = ""
 
 # The optional AWS session token to use.
 # AWS_SESSION_TOKEN = ""
 
 
 # The name of the bucket to store files in.
-AWS_S3_BUCKET_NAME = """"
+AWS_S3_BUCKET_NAME = ""
 
 # How to construct S3 URLs ("auto", "path", "virtual").
 AWS_S3_ADDRESSING_STYLE = "auto"
