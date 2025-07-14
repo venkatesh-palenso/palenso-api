@@ -66,15 +66,15 @@ ALLOWED_HOSTS = ['*']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-# sentry_sdk.init(
-#     dsn="",
-#     integrations=[DjangoIntegration(), RedisIntegration()],
-#     # If you wish to associate users to errors (assuming you are using
-#     # django.contrib.auth) you may enable sending PII data.
-#     traces_sample_rate=0.7,
-#     send_default_pii=True,
-#     environment="production",
-# )
+sentry_sdk.init(
+    dsn=os.environ.get("SENTRY_DSN", ""),
+    integrations=[DjangoIntegration(), RedisIntegration()],
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    traces_sample_rate=0.7,
+    send_default_pii=True,
+    environment="production",
+)
 
 # The AWS region to connect to.
 AWS_REGION = "us-east-1"
@@ -185,16 +185,8 @@ TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", "")
 
-# Twilio SendGrid Configuration for Email (SendGrid is part of Twilio)
-SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
-SENDGRID_FROM_EMAIL = os.environ.get("SENDGRID_FROM_EMAIL", "noreply@palenso.com")
-SENDGRID_FROM_NAME = os.environ.get("SENDGRID_FROM_NAME", "Palenso")
 
-# Email Backend Configuration
-EMAIL_BACKEND = "sendgrid_backend.SendgridBackend" if SENDGRID_API_KEY else "django.core.mail.backends.smtp.EmailBackend"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 
-# Update site settings for production
-SITE_URL = "https://palenso.vercel.app"
-DEFAULT_FROM_EMAIL = SENDGRID_FROM_EMAIL
 
 

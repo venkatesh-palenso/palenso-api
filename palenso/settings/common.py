@@ -2,6 +2,10 @@ import os
 import datetime
 from datetime import timedelta
 
+from dotenv import load_dotenv
+load_dotenv()  # Loads from a .env file by default
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -177,23 +181,20 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# Host for sending e-mail.
-EMAIL_HOST = ""
-# Port for sending e-mail.
-EMAIL_PORT = ""
-# Optional SMTP authentication information for EMAIL_HOST.
-EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = (
-    ""
-)
-EMAIL_USE_TLS = True
 
-# Email settings for authentication
-DEFAULT_FROM_EMAIL = "noreply@palenso.com"
-EMAIL_HOST_USER = EMAIL_HOST_USER or "noreply@palenso.com"
+
+# Host for sending e-mail.
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+# Port for sending e-mail.
+EMAIL_PORT = os.environ.get("EMAIL_PORT", "")
+
+# Optional SMTP authentication information for EMAIL_HOST.
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = False
 
 # Site settings
-SITE_URL = "http://localhost:8000"
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:3000")
 SITE_NAME = "Palenso"
 
 AUTH_USER_MODEL = "db.User"

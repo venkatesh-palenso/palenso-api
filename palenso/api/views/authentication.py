@@ -232,6 +232,7 @@ class UserSignupEndpoint(APIView):
 
         except Exception as e:
             capture_exception(e)
+            user.delete()
             return Response(
                 {"error": "Something went wrong. Please try again later or contact the support team."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -355,15 +356,15 @@ class SendVerificationCodeEndpoint(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 
+                user.mobile_number = mobile_number
+                user.save()
+
                 # Generate new OTP
                 otp = generate_otp()
                 token = create_token(user, 'otp_verification', expires_in_hours=1/6)  # 10 minutes
                 token.token = otp
                 token.save()
                 send_mobile_otp(user, otp)
-
-                user.mobile_number = mobile_number
-                user.save()
                 
                 return Response(
                     {"message": "OTP sent successfully."},
@@ -372,6 +373,7 @@ class SendVerificationCodeEndpoint(APIView):
             
         except Exception as e:
             capture_exception(e)
+            user.mobile_number = None
             return Response(
                 {"error": "Something went wrong. Please try again later or contact the support team."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -494,9 +496,6 @@ class VerifyMobileEndpoint(APIView):
                 {"error": "Something went wrong. Please try again later or contact the support team."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-
-
 
 
 class ForgotPasswordEndpoint(APIView):

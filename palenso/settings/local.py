@@ -52,7 +52,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
 
 sentry_sdk.init(
-    dsn="",
+    dsn=os.environ.get("SENTRY_DSN", ""),
     integrations=[DjangoIntegration(), RedisIntegration()],
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.

@@ -71,30 +71,15 @@ def send_email_verification(user, code):
         {settings.SITE_NAME}
         """
         
-        # Use Twilio SendGrid if configured, otherwise fallback to default
-        if hasattr(settings, 'SENDGRID_API_KEY') and settings.SENDGRID_API_KEY:
-            from sendgrid import SendGridAPIClient
-            from sendgrid.helpers.mail import Mail
-            
-            sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
-            mail = Mail(
-                from_email=settings.SENDGRID_FROM_EMAIL,
-                to_emails=user.email,
-                subject=subject,
-                plain_text_content=message
-            )
-            response = sg.send(mail)
-            logger.info(f"Twilio SendGrid email sent to {user.email}, status: {response.status_code}")
-        else:
-            # Fallback to Django's default email backend
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
-            logger.info(f"Email sent to {user.email} using default backend")
+       
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        logger.info(f"Email sent to {user.email} using default backend")
             
     except Exception as e:
         logger.error(f"Failed to send email verification to {user.email}: {str(e)}")
@@ -154,30 +139,15 @@ def send_password_reset_email(user, token):
         {settings.SITE_NAME}
         """
         
-        # Use Twilio SendGrid if configured, otherwise fallback to default
-        if hasattr(settings, 'SENDGRID_API_KEY') and settings.SENDGRID_API_KEY:
-            from sendgrid import SendGridAPIClient
-            from sendgrid.helpers.mail import Mail
-            
-            sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
-            mail = Mail(
-                from_email=settings.SENDGRID_FROM_EMAIL,
-                to_emails=user.email,
-                subject=subject,
-                plain_text_content=message
-            )
-            response = sg.send(mail)
-            logger.info(f"Twilio SendGrid password reset email sent to {user.email}, status: {response.status_code}")
-        else:
-            # Fallback to Django's default email backend
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
-            logger.info(f"Password reset email sent to {user.email} using default backend")
+
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        logger.info(f"Password reset email sent to {user.email} using default backend")
             
     except Exception as e:
         logger.error(f"Failed to send password reset email to {user.email}: {str(e)}")
