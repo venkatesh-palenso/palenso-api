@@ -6,6 +6,9 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from palenso.db.models import Token, User
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def generate_otp(length=6):
@@ -52,74 +55,133 @@ def mark_token_as_used(token):
 
 
 def send_email_verification(user, code):
-    """Send email verification with OTP code"""
-    subject = "Verify Your Email Address"
-    message = f"""
-    Hello {user.first_name or user.username},
-    
-    Your email verification code is: {code}
-    
-    This code will expire in 10 minutes.
-    
-    If you didn't create an account, please ignore this email.
-    
-    Best regards,
-    {settings.SITE_NAME}
-    """
-    
-    send_mail(
-        subject=subject,
-        message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
+    """Send email verification with OTP code using Twilio SendGrid"""
+    try:
+        subject = "Verify Your Email Address"
+        message = f"""
+        Hello {user.first_name or user.username},
+        
+        Your email verification code is: {code}
+        
+        This code will expire in 10 minutes.
+        
+        If you didn't create an account, please ignore this email.
+        
+        Best regards,
+        {settings.SITE_NAME}
+        """
+        
+        # Use Twilio SendGrid if configured, otherwise fallback to default
+        if hasattr(settings, 'SENDGRID_API_KEY') and settings.SENDGRID_API_KEY:
+            from sendgrid import SendGridAPIClient
+            from sendgrid.helpers.mail import Mail
+            
+            sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+            mail = Mail(
+                from_email=settings.SENDGRID_FROM_EMAIL,
+                to_emails=user.email,
+                subject=subject,
+                plain_text_content=message
+            )
+            response = sg.send(mail)
+            logger.info(f"Twilio SendGrid email sent to {user.email}, status: {response.status_code}")
+        else:
+            # Fallback to Django's default email backend
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            logger.info(f"Email sent to {user.email} using default backend")
+            
+    except Exception as e:
+        logger.error(f"Failed to send email verification to {user.email}: {str(e)}")
+        raise
 
 
 def send_mobile_otp(user, otp):
-    """Send OTP to mobile number"""
-    # This is a placeholder. In production, you would integrate with an SMS service
-    # like Twilio, AWS SNS, etc.
-    message = f"Your verification code is: {otp}. Valid for 10 minutes."
-    
-    # For development, just print the OTP
-    print(f"SMS to {user.mobile_number}: {message}")
-    
-    # In production, you would use something like:
-    # from twilio.rest import Client
-    # client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-    # client.messages.create(
-    #     body=message,
-    #     from_=settings.TWILIO_PHONE_NUMBER,
-    #     to=user.mobile_number
-    # )
+    """Send OTP to mobile number using Twilio"""
+    try:
+        message = f"Your Palenso verification code is: {otp}. Valid for 10 minutes."
+        
+        # Use Twilio if configured, otherwise fallback to development mode
+        if hasattr(settings, 'TWILIO_ACCOUNT_SID') and settings.TWILIO_ACCOUNT_SID:
+            from twilio.rest import Client
+            from twilio.base.exceptions import TwilioException
+            
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            
+            # Send SMS via Twilio
+            message_obj = client.messages.create(
+                body=message,
+                from_=settings.TWILIO_PHONE_NUMBER,
+                to=user.mobile_number
+            )
+            
+            logger.info(f"Twilio SMS sent to {user.mobile_number}, SID: {message_obj.sid}")
+            
+        else:
+            # Development mode - just log the OTP
+            logger.info(f"Development mode - SMS to {user.mobile_number}: {message}")
+            print(f"SMS to {user.mobile_number}: {message}")
+            
+    except Exception as e:
+        logger.error(f"Failed to send SMS to {user.mobile_number}: {str(e)}")
+        # In development, still print the OTP even if Twilio fails
+        if settings.DEBUG:
+            print(f"SMS to {user.mobile_number}: {message}")
+        raise
 
 
 def send_password_reset_email(user, token):
-    """Send password reset email"""
-    subject = "Reset Your Password"
-    message = f"""
-    Hello {user.first_name or user.username},
-    
-    You requested to reset your password. Click the link below to set a new password:
-    
-    {settings.SITE_URL}/reset-password/{token.token}
-    
-    This link will expire in 1 hour.
-    
-    If you didn't request a password reset, please ignore this email.
-    
-    Best regards,
-    {settings.SITE_NAME}
-    """
-    
-    send_mail(
-        subject=subject,
-        message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
+    """Send password reset email using Twilio SendGrid"""
+    try:
+        subject = "Reset Your Password"
+        message = f"""
+        Hello {user.first_name or user.username},
+        
+        You requested to reset your password. Click the link below to set a new password:
+        
+        {settings.SITE_URL}/reset-password/{token.token}
+        
+        This link will expire in 1 hour.
+        
+        If you didn't request a password reset, please ignore this email.
+        
+        Best regards,
+        {settings.SITE_NAME}
+        """
+        
+        # Use Twilio SendGrid if configured, otherwise fallback to default
+        if hasattr(settings, 'SENDGRID_API_KEY') and settings.SENDGRID_API_KEY:
+            from sendgrid import SendGridAPIClient
+            from sendgrid.helpers.mail import Mail
+            
+            sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+            mail = Mail(
+                from_email=settings.SENDGRID_FROM_EMAIL,
+                to_emails=user.email,
+                subject=subject,
+                plain_text_content=message
+            )
+            response = sg.send(mail)
+            logger.info(f"Twilio SendGrid password reset email sent to {user.email}, status: {response.status_code}")
+        else:
+            # Fallback to Django's default email backend
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            logger.info(f"Password reset email sent to {user.email} using default backend")
+            
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {user.email}: {str(e)}")
+        raise
 
 
 def cleanup_expired_tokens():
