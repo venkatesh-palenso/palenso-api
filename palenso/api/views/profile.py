@@ -3,11 +3,10 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
 
 from sentry_sdk import capture_exception
 
-from palenso.api.serializers.company import CompanySerializer
+from palenso.api.serializers.people import EmployerSerializer
 from palenso.api.serializers.profile import (
     EducationSerializer,
     InterestSerializer,
@@ -20,7 +19,6 @@ from palenso.api.serializers.profile import (
 )
 from palenso.db.models import (
     User,
-    Profile,
     Education,
     WorkExperience,
     Interest,
@@ -44,7 +42,7 @@ class ProfileDetailView(APIView):
                 serializer = StudentProfileSerializer(user)
 
             if user.role == "employer":
-                serializer = CompanyProfileSerializer(user)
+                serializer = EmployerSerializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response(

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from palenso.api.serializers.people import UserSerializer
 from palenso.db.models.profile import (
     Education,
     Interest,
