@@ -1,39 +1,17 @@
 from rest_framework import serializers
-from palenso.api.serializers.profile import ProfileSerializer
-from palenso.db.models import Company
-from palenso.db.models.user import User
+from palenso.db.models.company import Company
 
 
 class CompanySerializer(serializers.ModelSerializer):
-    """Serializer for education"""
+    """Serializer for Company model"""
+    employer_name = serializers.CharField(source="employer.get_full_name", read_only=True)
 
     class Meta:
         model = Company
-        fields = "__all__"
-        read_only_fields = ["company"]
-
-
-class CompanyProfileSerializer(serializers.ModelSerializer):
-    """Complete user profile serializer with all related data"""
-
-    profile = ProfileSerializer(read_only=True)
-    company = CompanySerializer(read_only=True)
-
-    class Meta:
-        model = User
         fields = [
-            "id",
-            "username",
-            "email",
-            "mobile_number",
-            "first_name",
-            "last_name",
-            "is_email_verified",
-            "is_mobile_verified",
-            "is_active",
-            "date_joined",
-            "last_active",
-            "profile",
-            "company",
+            "id", "employer", "employer_name", "name", "description", "industry",
+            "company_size", "founded_year", "website", "email", "phone", "country",
+            "state", "city", "address", "logo_url", "banner_image_url", "linkedin",
+            "twitter", "facebook", "is_verified", "is_active", "created_at", "updated_at"
         ]
-        read_only_fields = ["id", "username", "date_joined", "last_active"]
+        read_only_fields = ["id", "employer", "created_at", "updated_at"]

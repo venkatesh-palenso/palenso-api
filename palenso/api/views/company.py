@@ -1,6 +1,6 @@
 from rest_framework import status
 
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters as rest_filters
@@ -14,7 +14,10 @@ from palenso.db.models.company import Company
 
 
 class CompanyProfileListCreateEndpoint(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     filter_backends = (
         filters.DjangoFilterBackend,
@@ -65,6 +68,11 @@ class CompanyProfileListCreateEndpoint(APIView):
 
 
 class CompanyProfileDetailEndpoint(APIView):
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+        
     def get(self, request, company_id):
         try:
             queryset = Company.objects.get(pk=company_id)
@@ -73,7 +81,7 @@ class CompanyProfileDetailEndpoint(APIView):
         except Company.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
             capture_exception(e)
@@ -93,7 +101,7 @@ class CompanyProfileDetailEndpoint(APIView):
         except Company.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
             capture_exception(e)
@@ -105,7 +113,7 @@ class CompanyProfileDetailEndpoint(APIView):
     def delete(self, request, company_id):
         try:
             queryset = Company.objects.get(pk=company_id)
-            if request.user.role != "admin" and request.user != queryset.user:
+            if request.user.role != "admin" and request.user != queryset.employer:
                 return Response("Restricted", status=status.HTTP_403_FORBIDDEN)
             queryset.delete()
             return Response("Deleted successfully!", status=status.HTTP_204_NO_CONTENT)
@@ -113,7 +121,7 @@ class CompanyProfileDetailEndpoint(APIView):
         except Company.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
             capture_exception(e)

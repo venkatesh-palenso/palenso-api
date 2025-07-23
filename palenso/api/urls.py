@@ -28,11 +28,29 @@ from palenso.api.views.company import (
     CompanyProfileDetailEndpoint,
 )
 
-from palenso.api.views.job import JobListCreateEndpoint, JobDetailEndpoint
+from palenso.api.views.job import (
+    JobListCreateEndpoint, 
+    JobDetailEndpoint,
+    JobApplicationListCreateEndpoint,
+    JobApplicationDetailEndpoint,
+    SavedJobListCreateEndpoint,
+    SavedJobDetailEndpoint,
+    InterviewListCreateEndpoint,
+    InterviewDetailEndpoint,
+    OfferListCreateEndpoint,
+    OfferDetailEndpoint,
+)
 
-from palenso.api.views.event import EventListCreateEndpoint, EventDetailEndpoint
+from palenso.api.views.event import (
+    EventListCreateEndpoint, 
+    EventDetailEndpoint,
+    EventRegistrationListCreateEndpoint,
+    EventRegistrationDetailEndpoint,
+)
 
 from palenso.api.views.media import UploadMediaEndpoint
+
+from palenso.api.views.dashboard import DashboardAnalyticsEndpoint, DashboardInfoEndpoint
 
 urlpatterns = [
     # media
@@ -54,6 +72,7 @@ urlpatterns = [
     # users
     path("users", PeopleView.as_view()),
     path("users/me", UserView.as_view()),
+    path("users/<uuid:user_id>", UserView.as_view()),
     # profile
     path("users/<uuid:user_id>/profile", ProfileDetailView.as_view()),
     path("educations", EducationView.as_view()),
@@ -77,10 +96,29 @@ urlpatterns = [
     # company
     path("companies", CompanyProfileListCreateEndpoint.as_view()),
     path("companies/<uuid:company_id>", CompanyProfileDetailEndpoint.as_view()),
-    # event
-    path("events", EventListCreateEndpoint.as_view()),
-    path("events/<uuid:event_id>", EventDetailEndpoint.as_view()),
     # job
     path("jobs", JobListCreateEndpoint.as_view()),
     path("jobs/<uuid:job_id>", JobDetailEndpoint.as_view()),
+    # job applications
+    path("job-applications", JobApplicationListCreateEndpoint.as_view()),
+    path("job-applications/<uuid:application_id>", JobApplicationDetailEndpoint.as_view()),
+    # saved jobs
+    path("saved-jobs", SavedJobListCreateEndpoint.as_view()),
+    path("saved-jobs/<uuid:saved_job_id>", SavedJobDetailEndpoint.as_view()),
+    # interviews
+    path("interviews", InterviewListCreateEndpoint.as_view()),
+    path("interviews/<uuid:interview_id>", InterviewDetailEndpoint.as_view()),
+    # offers
+    path("offers", OfferListCreateEndpoint.as_view()),
+    path("offers/<uuid:offer_id>", OfferDetailEndpoint.as_view()),
+    # event
+    path("events", EventListCreateEndpoint.as_view()),
+    path("events/<uuid:event_id>", EventDetailEndpoint.as_view()),
+    # event registrations
+    path("event-registrations", EventRegistrationListCreateEndpoint.as_view()),
+    path("event-registrations/<uuid:registration_id>", EventRegistrationDetailEndpoint.as_view()),
+    # analytics
+    path("dashboard-analytics", DashboardAnalyticsEndpoint.as_view()),
+    # dashboard
+    path("dashboard-info", DashboardInfoEndpoint.as_view()),
 ]

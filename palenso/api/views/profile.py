@@ -7,7 +7,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 from sentry_sdk import capture_exception
 
-from palenso.api.serializers.company import CompanyProfileSerializer
+from palenso.api.serializers.company import CompanySerializer
 from palenso.api.serializers.profile import (
     EducationSerializer,
     InterestSerializer,

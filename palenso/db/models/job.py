@@ -145,3 +145,110 @@ class SavedJob(BaseModel):
 
     def __str__(self):
         return f"{self.student.get_full_name()} - {self.job.title}"
+
+
+class Interview(BaseModel):
+    """Interview Model for Job Applications"""
+
+    application = models.ForeignKey(
+        JobApplication, on_delete=models.CASCADE, related_name="interviews"
+    )
+    interviewer = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="conducted_interviews"
+    )
+
+    # Interview Details
+    interview_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("phone", "Phone Interview"),
+            ("video", "Video Interview"),
+            ("in_person", "In-Person Interview"),
+            ("technical", "Technical Interview"),
+            ("behavioral", "Behavioral Interview"),
+            ("final", "Final Interview"),
+        ],
+    )
+    scheduled_at = models.DateTimeField()
+    duration_minutes = models.IntegerField(default=60)
+    location = models.CharField(max_length=200, blank=True)
+    meeting_url = models.URLField(blank=True)
+
+    # Status
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("scheduled", "Scheduled"),
+            ("completed", "Completed"),
+            ("cancelled", "Cancelled"),
+            ("rescheduled", "Rescheduled"),
+            ("no_show", "No Show"),
+        ],
+        default="scheduled",
+    )
+
+    # Notes
+    interviewer_notes = models.TextField(blank=True)
+    candidate_notes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "interviews"
+        ordering = ["-scheduled_at"]
+
+    def __str__(self):
+        return f"{self.application.applicant.get_full_name()} - {self.application.job.title}"
+
+
+class Offer(BaseModel):
+    """Job Offer Model"""
+
+    application = models.ForeignKey(
+        JobApplication, on_delete=models.CASCADE, related_name="offers"
+    )
+    offered_by = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="offers_made"
+    )
+
+    # Offer Details
+    position_title = models.CharField(max_length=200)
+    salary_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    salary_currency = models.CharField(max_length=3, default="USD")
+    job_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("full_time", "Full Time"),
+            ("part_time", "Part Time"),
+            ("contract", "Contract"),
+            ("internship", "Internship"),
+        ],
+    )
+    start_date = models.DateField()
+    offer_deadline = models.DateField()
+
+    # Benefits and Terms
+    benefits = models.TextField(blank=True)
+    terms_conditions = models.TextField(blank=True)
+
+    # Status
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("accepted", "Accepted"),
+            ("declined", "Declined"),
+            ("expired", "Expired"),
+            ("withdrawn", "Withdrawn"),
+        ],
+        default="pending",
+    )
+
+    # Response
+    response_date = models.DateTimeField(null=True, blank=True)
+    response_notes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "offers"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.application.applicant.get_full_name()} - {self.position_title}"
