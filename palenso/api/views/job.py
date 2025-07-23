@@ -8,19 +8,19 @@ from django_filters import rest_framework as filters
 
 from sentry_sdk import capture_exception
 
-from palenso.api.filters.company import CompanyFilter
-from palenso.api.serializers.company import CompanySerializer
-from palenso.db.models.company import Company
+from palenso.api.filters.job import JobFilter
+from palenso.api.serializers.job import JobSerializer
+from palenso.db.models import Job
 
 
-class CompanyProfileListCreateEndpoint(APIView):
+class JobListCreateEndpoint(APIView):
     permission_classes = [IsAuthenticated]
 
     filter_backends = (
         filters.DjangoFilterBackend,
         rest_filters.SearchFilter,
     )
-    filterset_class = CompanyFilter
+    filterset_class = JobFilter
     search_fields = (
         "^name",
         "^industry",
@@ -36,9 +36,9 @@ class CompanyProfileListCreateEndpoint(APIView):
 
     def get(self, request):
         try:
-            queryset = Company.objects.all()
+            queryset = Job.objects.all()
             filtered_queryset = self.filter_queryset(request, queryset)
-            serializer = CompanySerializer(filtered_queryset, many=True)
+            serializer = JobSerializer(filtered_queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             capture_exception(e)
@@ -50,13 +50,14 @@ class CompanyProfileListCreateEndpoint(APIView):
     def post(self, request):
         try:
             payload = request.data
-            payload["employer"] = request.user.id
-            serializer = CompanySerializer(data=payload)
+            payload["company"] = request.user.company.id
+            serializer = JobSerializer(data=payload)
             if serializer.is_valid():
                 serializer.save(created_by=request.user, updated_by=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print(e)
             capture_exception(e)
             return Response(
                 {"message": "Something went wrong"},
@@ -64,13 +65,13 @@ class CompanyProfileListCreateEndpoint(APIView):
             )
 
 
-class CompanyProfileDetailEndpoint(APIView):
-    def get(self, request, company_id):
+class JobDetailEndpoint(APIView):
+    def get(self, request, job_id):
         try:
-            queryset = Company.objects.get(pk=company_id)
-            serializer = CompanySerializer(queryset)
+            queryset = Job.objects.get(pk=job_id)
+            serializer = JobSerializer(queryset)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Company.DoesNotExist:
+        except Job.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -82,15 +83,15 @@ class CompanyProfileDetailEndpoint(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def put(self, request, company_id):
+    def put(self, request, job_id):
         try:
-            queryset = Company.objects.get(pk=company_id)
-            serializer = CompanySerializer(queryset, data=request.data, partial=True)
+            queryset = Job.objects.get(pk=job_id)
+            serializer = JobSerializer(queryset, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
                 return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Company.DoesNotExist:
+        except Job.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -102,15 +103,15 @@ class CompanyProfileDetailEndpoint(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def delete(self, request, company_id):
+    def delete(self, request, job_id):
         try:
-            queryset = Company.objects.get(pk=company_id)
+            queryset = Job.objects.get(pk=job_id)
             if request.user.role != "admin" and request.user != queryset.user:
                 return Response("Restricted", status=status.HTTP_403_FORBIDDEN)
             queryset.delete()
             return Response("Deleted successfully!", status=status.HTTP_204_NO_CONTENT)
 
-        except Company.DoesNotExist:
+        except Job.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST,

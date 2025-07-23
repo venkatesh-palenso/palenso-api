@@ -28,6 +28,10 @@ from palenso.api.views.company import (
     CompanyProfileDetailEndpoint,
 )
 
+from palenso.api.views.job import JobListCreateEndpoint, JobDetailEndpoint
+
+from palenso.api.views.event import EventListCreateEndpoint, EventDetailEndpoint
+
 from palenso.api.views.media import UploadMediaEndpoint
 
 urlpatterns = [
@@ -73,4 +77,10 @@ urlpatterns = [
     # company
     path("companies", CompanyProfileListCreateEndpoint.as_view()),
     path("companies/<uuid:company_id>", CompanyProfileDetailEndpoint.as_view()),
+    # event
+    path("events", EventListCreateEndpoint.as_view()),
+    path("events/<uuid:event_id>", EventDetailEndpoint.as_view()),
+    # job
+    path("jobs", JobListCreateEndpoint.as_view()),
+    path("jobs/<uuid:job_id>", JobDetailEndpoint.as_view()),
 ]

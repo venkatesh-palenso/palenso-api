@@ -8,19 +8,19 @@ from django_filters import rest_framework as filters
 
 from sentry_sdk import capture_exception
 
-from palenso.api.filters.company import CompanyFilter
-from palenso.api.serializers.company import CompanySerializer
-from palenso.db.models.company import Company
+from palenso.api.filters.event import EventFilter
+from palenso.api.serializers.event import EventSerializer
+from palenso.db.models import Event
 
 
-class CompanyProfileListCreateEndpoint(APIView):
+class EventListCreateEndpoint(APIView):
     permission_classes = [IsAuthenticated]
 
     filter_backends = (
         filters.DjangoFilterBackend,
         rest_filters.SearchFilter,
     )
-    filterset_class = CompanyFilter
+    filterset_class = EventFilter
     search_fields = (
         "^name",
         "^industry",
@@ -36,9 +36,9 @@ class CompanyProfileListCreateEndpoint(APIView):
 
     def get(self, request):
         try:
-            queryset = Company.objects.all()
+            queryset = Event.objects.all()
             filtered_queryset = self.filter_queryset(request, queryset)
-            serializer = CompanySerializer(filtered_queryset, many=True)
+            serializer = EventSerializer(filtered_queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             capture_exception(e)
@@ -51,7 +51,7 @@ class CompanyProfileListCreateEndpoint(APIView):
         try:
             payload = request.data
             payload["employer"] = request.user.id
-            serializer = CompanySerializer(data=payload)
+            serializer = EventSerializer(data=payload)
             if serializer.is_valid():
                 serializer.save(created_by=request.user, updated_by=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -64,13 +64,13 @@ class CompanyProfileListCreateEndpoint(APIView):
             )
 
 
-class CompanyProfileDetailEndpoint(APIView):
-    def get(self, request, company_id):
+class EventDetailEndpoint(APIView):
+    def get(self, request, event_id):
         try:
-            queryset = Company.objects.get(pk=company_id)
-            serializer = CompanySerializer(queryset)
+            queryset = Event.objects.get(pk=event_id)
+            serializer = EventSerializer(queryset)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Company.DoesNotExist:
+        except Event.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -82,15 +82,15 @@ class CompanyProfileDetailEndpoint(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def put(self, request, company_id):
+    def put(self, request, event_id):
         try:
-            queryset = Company.objects.get(pk=company_id)
-            serializer = CompanySerializer(queryset, data=request.data, partial=True)
+            queryset = Event.objects.get(pk=event_id)
+            serializer = EventSerializer(queryset, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
                 return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Company.DoesNotExist:
+        except Event.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -102,15 +102,15 @@ class CompanyProfileDetailEndpoint(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def delete(self, request, company_id):
+    def delete(self, request, event_id):
         try:
-            queryset = Company.objects.get(pk=company_id)
+            queryset = Event.objects.get(pk=event_id)
             if request.user.role != "admin" and request.user != queryset.user:
                 return Response("Restricted", status=status.HTTP_403_FORBIDDEN)
             queryset.delete()
             return Response("Deleted successfully!", status=status.HTTP_204_NO_CONTENT)
 
-        except Company.DoesNotExist:
+        except Event.DoesNotExist:
             return Response(
                 {"error": "Sorry, Company not found. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST,
