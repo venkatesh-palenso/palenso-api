@@ -131,6 +131,23 @@ class User(AbstractBaseUser, BaseModel):
         """Return True if the user has each of the specified permissions."""
         return all(self.has_perm(perm, obj) for perm in perm_list)
 
+    @property
+    def is_employer(self):
+        """Check if user is an employer"""
+        return self.role == "employer"
+
+    @property
+    def has_company(self):
+        """Check if employer user has a company profile"""
+        if not self.is_employer:
+            return False
+        return hasattr(self, 'company') and self.company is not None
+
+    @property
+    def is_employer_with_company(self):
+        """Check if user is an employer and has a company profile"""
+        return self.is_employer and self.has_company
+
 
 class Token(BaseModel):
     """Model to store different types of tokens"""

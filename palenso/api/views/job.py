@@ -55,6 +55,13 @@ class JobListCreateEndpoint(APIView):
 
     def post(self, request):
         try:
+            # Check if employer has company
+            if request.user.role == "employer" and not request.user.is_employer_with_company:
+                return Response(
+                    {"error": "Please create a company profile before posting jobs."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
             payload = request.data
             payload["company"] = request.user.company.id
             serializer = JobSerializer(data=payload)
@@ -140,6 +147,9 @@ class JobApplicationListCreateEndpoint(APIView):
     def get(self, request):
         try:
             if request.user.role == "employer":
+                # Check if employer has company
+                if not request.user.is_employer_with_company:
+                    return Response([], status=status.HTTP_200_OK)
                 # Employer sees applications for their company's jobs
                 queryset = JobApplication.objects.filter(job__company__employer=request.user)
             else:
@@ -286,6 +296,9 @@ class InterviewListCreateEndpoint(APIView):
     def get(self, request):
         try:
             if request.user.role == "employer":
+                # Check if employer has company
+                if not request.user.is_employer_with_company:
+                    return Response([], status=status.HTTP_200_OK)
                 # Employer sees interviews for their company's applications
                 queryset = Interview.objects.filter(
                     application__job__company__employer=request.user
@@ -381,6 +394,9 @@ class OfferListCreateEndpoint(APIView):
     def get(self, request):
         try:
             if request.user.role == "employer":
+                # Check if employer has company
+                if not request.user.is_employer_with_company:
+                    return Response([], status=status.HTTP_200_OK)
                 # Employer sees offers made by their company
                 queryset = Offer.objects.filter(
                     application__job__company__employer=request.user

@@ -106,13 +106,14 @@ class DashboardAnalyticsEndpoint(APIView):
             "hires": {"total": 0, "this_month": 0},
         }
 
-        # Get company
-        company = request.user.company
-        if not company:
+        # Check if employer has company
+        if not request.user.is_employer_with_company:
+            analytics_data["company_setup_required"] = True
             return Response(
                 analytics_data,
                 status=status.HTTP_200_OK,
             )
+        company = request.user.company
 
         # Active Jobs
         active_jobs = Job.objects.filter(company=company, is_active=True).count()
@@ -298,13 +299,20 @@ class DashboardInfoEndpoint(APIView):
 
     def _get_employer_dashboard(self, request, now, week_ago):
         """Get dashboard data for employers"""
+        # Check if employer has company
+        if not request.user.is_employer_with_company:
+            # Return empty dashboard for employers without company
+            dashboard_data = {
+                "recent_applications": [],
+                "active_jobs": [],
+                "upcoming_events": [],
+                "upcoming_interviews": [],
+                "company_setup_required": True,
+            }
+            return Response(dashboard_data, status=status.HTTP_200_OK)
+
         # Get company
         company = request.user.company
-        if not company:
-            return Response(
-                {"error": "No company found for this employer."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
 
         # Recent Applications (applications from last 7 days)
         recent_applications = (
