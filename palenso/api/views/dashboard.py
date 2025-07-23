@@ -98,12 +98,32 @@ class DashboardAnalyticsEndpoint(APIView):
 
     def _get_employer_analytics(self, request, now, week_start, month_start):
         """Get analytics data for employers"""
+
+        analytics_data = {
+            "active_jobs": {
+                "total": 0,
+                "this_week": 0
+            },
+            "applications": {0
+                "total": 0,
+                "this_week": 0
+            },
+            "interviews_scheduled": {
+                "total": 0,
+                "this_week": 0
+            },
+            "hires": {
+                "total": 0,
+                "this_month": 0
+            }
+        }
+
         # Get company
         company = request.user.company
         if not company:
             return Response(
-                {"error": "No company found for this employer."},
-                status=status.HTTP_404_NOT_FOUND,
+                analytics_data,
+                status=status.HTTP_200_OK,
             )
 
         # Active Jobs
