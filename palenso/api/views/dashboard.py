@@ -13,7 +13,6 @@ from palenso.db.models.company import Company
 from palenso.db.models.user import User
 
 
-
 class DashboardAnalyticsEndpoint(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -25,9 +24,13 @@ class DashboardAnalyticsEndpoint(APIView):
             month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
             if user_role == "student":
-                return self._get_student_analytics(request, now, week_start, month_start)
+                return self._get_student_analytics(
+                    request, now, week_start, month_start
+                )
             elif user_role == "employer":
-                return self._get_employer_analytics(request, now, week_start, month_start)
+                return self._get_employer_analytics(
+                    request, now, week_start, month_start
+                )
             elif user_role == "admin":
                 return self._get_admin_analytics(request, now, week_start, month_start)
             else:
@@ -46,10 +49,11 @@ class DashboardAnalyticsEndpoint(APIView):
     def _get_student_analytics(self, request, now, week_start, month_start):
         """Get analytics data for students"""
         # Submitted Applications
-        submitted_applications = JobApplication.objects.filter(applicant=request.user).count()
+        submitted_applications = JobApplication.objects.filter(
+            applicant=request.user
+        ).count()
         applications_this_week = JobApplication.objects.filter(
-            applicant=request.user,
-            created_at__gte=week_start
+            applicant=request.user, created_at__gte=week_start
         ).count()
 
         # Interviews Scheduled
@@ -57,41 +61,37 @@ class DashboardAnalyticsEndpoint(APIView):
             application__applicant=request.user
         ).count()
         interviews_this_week = Interview.objects.filter(
-            application__applicant=request.user,
-            created_at__gte=week_start
+            application__applicant=request.user, created_at__gte=week_start
         ).count()
 
         # Offers Received
-        offers_received = Offer.objects.filter(application__applicant=request.user).count()
+        offers_received = Offer.objects.filter(
+            application__applicant=request.user
+        ).count()
         offers_this_month = Offer.objects.filter(
-            application__applicant=request.user,
-            created_at__gte=month_start
+            application__applicant=request.user, created_at__gte=month_start
         ).count()
 
         # Saved Jobs
         saved_jobs = SavedJob.objects.filter(student=request.user).count()
         saved_jobs_this_week = SavedJob.objects.filter(
-            student=request.user,
-            created_at__gte=week_start
+            student=request.user, created_at__gte=week_start
         ).count()
 
         analytics_data = {
             "submitted_applications": {
                 "total": submitted_applications,
-                "this_week": applications_this_week
+                "this_week": applications_this_week,
             },
             "interviews_scheduled": {
                 "total": interviews_scheduled,
-                "this_week": interviews_this_week
+                "this_week": interviews_this_week,
             },
             "offers_received": {
                 "total": offers_received,
-                "this_month": offers_this_month
+                "this_month": offers_this_month,
             },
-            "saved_jobs": {
-                "total": saved_jobs,
-                "this_week": saved_jobs_this_week
-            }
+            "saved_jobs": {"total": saved_jobs, "this_week": saved_jobs_this_week},
         }
 
         return Response(analytics_data, status=status.HTTP_200_OK)
@@ -100,22 +100,10 @@ class DashboardAnalyticsEndpoint(APIView):
         """Get analytics data for employers"""
 
         analytics_data = {
-            "active_jobs": {
-                "total": 0,
-                "this_week": 0
-            },
-            "applications": {0
-                "total": 0,
-                "this_week": 0
-            },
-            "interviews_scheduled": {
-                "total": 0,
-                "this_week": 0
-            },
-            "hires": {
-                "total": 0,
-                "this_month": 0
-            }
+            "active_jobs": {"total": 0, "this_week": 0},
+            "applications": {"total": 0, "this_week": 0},
+            "interviews_scheduled": {"total": 0, "this_week": 0},
+            "hires": {"total": 0, "this_month": 0},
         }
 
         # Get company
@@ -129,16 +117,13 @@ class DashboardAnalyticsEndpoint(APIView):
         # Active Jobs
         active_jobs = Job.objects.filter(company=company, is_active=True).count()
         active_jobs_this_week = Job.objects.filter(
-            company=company, 
-            is_active=True, 
-            created_at__gte=week_start
+            company=company, is_active=True, created_at__gte=week_start
         ).count()
 
         # Applications Count
         applications_count = JobApplication.objects.filter(job__company=company).count()
         applications_this_week = JobApplication.objects.filter(
-            job__company=company, 
-            created_at__gte=week_start
+            job__company=company, created_at__gte=week_start
         ).count()
 
         # Interviews Scheduled
@@ -146,38 +131,28 @@ class DashboardAnalyticsEndpoint(APIView):
             application__job__company=company
         ).count()
         interviews_this_week = Interview.objects.filter(
-            application__job__company=company,
-            created_at__gte=week_start
+            application__job__company=company, created_at__gte=week_start
         ).count()
 
         # Hires Count (applications with status 'hired')
         hires_count = JobApplication.objects.filter(
-            job__company=company, 
-            status='hired'
+            job__company=company, status="hired"
         ).count()
         hires_this_month = JobApplication.objects.filter(
-            job__company=company,
-            status='hired',
-            updated_at__gte=month_start
+            job__company=company, status="hired", updated_at__gte=month_start
         ).count()
 
         analytics_data = {
-            "active_jobs": {
-                "total": active_jobs,
-                "this_week": active_jobs_this_week
-            },
+            "active_jobs": {"total": active_jobs, "this_week": active_jobs_this_week},
             "applications": {
                 "total": applications_count,
-                "this_week": applications_this_week
+                "this_week": applications_this_week,
             },
             "interviews_scheduled": {
                 "total": interviews_scheduled,
-                "this_week": interviews_this_week
+                "this_week": interviews_this_week,
             },
-            "hires": {
-                "total": hires_count,
-                "this_month": hires_this_month
-            }
+            "hires": {"total": hires_count, "this_month": hires_this_month},
         }
 
         return Response(analytics_data, status=status.HTTP_200_OK)
@@ -186,49 +161,30 @@ class DashboardAnalyticsEndpoint(APIView):
         """Get analytics data for admins"""
         # Total Users
         total_users = User.objects.count()
-        users_this_week = User.objects.filter(
-            date_joined__gte=week_start
-        ).count()
+        users_this_week = User.objects.filter(date_joined__gte=week_start).count()
 
         # Companies
         total_companies = Company.objects.count()
-        companies_this_week = Company.objects.filter(
-            created_at__gte=week_start
-        ).count()
+        companies_this_week = Company.objects.filter(created_at__gte=week_start).count()
 
         # Active Jobs
         active_jobs = Job.objects.filter(is_active=True).count()
         active_jobs_this_week = Job.objects.filter(
-            is_active=True,
-            created_at__gte=week_start
+            is_active=True, created_at__gte=week_start
         ).count()
 
         # Events
         total_events = Event.objects.count()
-        events_this_week = Event.objects.filter(
-            created_at__gte=week_start
-        ).count()
+        events_this_week = Event.objects.filter(created_at__gte=week_start).count()
 
         analytics_data = {
-            "total_users": {
-                "total": total_users,
-                "this_week": users_this_week
-            },
-            "companies": {
-                "total": total_companies,
-                "this_week": companies_this_week
-            },
-            "active_jobs": {
-                "total": active_jobs,
-                "this_week": active_jobs_this_week
-            },
-            "events": {
-                "total": total_events,
-                "this_week": events_this_week
-            }
+            "total_users": {"total": total_users, "this_week": users_this_week},
+            "companies": {"total": total_companies, "this_week": companies_this_week},
+            "active_jobs": {"total": active_jobs, "this_week": active_jobs_this_week},
+            "events": {"total": total_events, "this_week": events_this_week},
         }
 
-        return Response(analytics_data, status=status.HTTP_200_OK) 
+        return Response(analytics_data, status=status.HTTP_200_OK)
 
 
 class DashboardInfoEndpoint(APIView):
@@ -262,26 +218,29 @@ class DashboardInfoEndpoint(APIView):
     def _get_student_dashboard(self, request, now, week_ago):
         """Get dashboard data for students"""
         # Recent Job Opportunities (active jobs from last 7 days)
-        recent_jobs = Job.objects.filter(
-            is_active=True,
-            created_at__gte=week_ago
-        ).select_related('company').order_by('-created_at')[:10]
+        recent_jobs = (
+            Job.objects.filter(is_active=True, created_at__gte=week_ago)
+            .select_related("company")
+            .order_by("-created_at")[:10]
+        )
 
         # Upcoming Events (events starting in the future)
-        upcoming_events = Event.objects.filter(
-            is_active=True,
-            start_date__gt=now
-        ).select_related('company', 'organizer').order_by('start_date')[:10]
+        upcoming_events = (
+            Event.objects.filter(is_active=True, start_date__gt=now)
+            .select_related("company", "organizer")
+            .order_by("start_date")[:10]
+        )
 
         # Upcoming Interviews (scheduled interviews for the student)
-        upcoming_interviews = Interview.objects.filter(
-            application__applicant=request.user,
-            scheduled_at__gt=now,
-            status='scheduled'
-        ).select_related(
-            'application__job__company',
-            'interviewer'
-        ).order_by('scheduled_at')[:10]
+        upcoming_interviews = (
+            Interview.objects.filter(
+                application__applicant=request.user,
+                scheduled_at__gt=now,
+                status="scheduled",
+            )
+            .select_related("application__job__company", "interviewer")
+            .order_by("scheduled_at")[:10]
+        )
 
         dashboard_data = {
             "recent_job_opportunities": [
@@ -332,7 +291,7 @@ class DashboardInfoEndpoint(APIView):
                     "status": interview.status,
                 }
                 for interview in upcoming_interviews
-            ]
+            ],
         }
 
         return Response(dashboard_data, status=status.HTTP_200_OK)
@@ -348,35 +307,36 @@ class DashboardInfoEndpoint(APIView):
             )
 
         # Recent Applications (applications from last 7 days)
-        recent_applications = JobApplication.objects.filter(
-            job__company=company,
-            created_at__gte=week_ago
-        ).select_related(
-            'job', 'applicant'
-        ).order_by('-created_at')[:10]
+        recent_applications = (
+            JobApplication.objects.filter(
+                job__company=company, created_at__gte=week_ago
+            )
+            .select_related("job", "applicant")
+            .order_by("-created_at")[:10]
+        )
 
         # Active Jobs
-        active_jobs = Job.objects.filter(
-            company=company,
-            is_active=True
-        ).order_by('-created_at')[:10]
+        active_jobs = Job.objects.filter(company=company, is_active=True).order_by(
+            "-created_at"
+        )[:10]
 
         # Upcoming Events (events organized by the employer)
-        upcoming_events = Event.objects.filter(
-            organizer=request.user,
-            start_date__gt=now
-        ).select_related('company').order_by('start_date')[:10]
+        upcoming_events = (
+            Event.objects.filter(organizer=request.user, start_date__gt=now)
+            .select_related("company")
+            .order_by("start_date")[:10]
+        )
 
         # Upcoming Interviews (interviews for the employer's company)
-        upcoming_interviews = Interview.objects.filter(
-            application__job__company=company,
-            scheduled_at__gt=now,
-            status='scheduled'
-        ).select_related(
-            'application__job',
-            'application__applicant',
-            'interviewer'
-        ).order_by('scheduled_at')[:10]
+        upcoming_interviews = (
+            Interview.objects.filter(
+                application__job__company=company,
+                scheduled_at__gt=now,
+                status="scheduled",
+            )
+            .select_related("application__job", "application__applicant", "interviewer")
+            .order_by("scheduled_at")[:10]
+        )
 
         dashboard_data = {
             "recent_applications": [
@@ -386,7 +346,11 @@ class DashboardInfoEndpoint(APIView):
                     "applicant_name": app.applicant.get_full_name(),
                     "applicant_email": app.applicant.email,
                     "status": app.status,
-                    "cover_letter": app.cover_letter[:200] + "..." if len(app.cover_letter) > 200 else app.cover_letter,
+                    "cover_letter": (
+                        app.cover_letter[:200] + "..."
+                        if len(app.cover_letter) > 200
+                        else app.cover_letter
+                    ),
                     "expected_salary": app.expected_salary,
                     "available_from": app.available_from,
                     "created_at": app.created_at,
@@ -437,7 +401,7 @@ class DashboardInfoEndpoint(APIView):
                     "interviewer_name": interview.interviewer.get_full_name(),
                 }
                 for interview in upcoming_interviews
-            ]
+            ],
         }
 
         return Response(dashboard_data, status=status.HTTP_200_OK)
@@ -445,81 +409,90 @@ class DashboardInfoEndpoint(APIView):
     def _get_admin_dashboard(self, request, now, week_ago):
         """Get dashboard data for admins"""
         # Recent Users (users who joined in last 7 days)
-        recent_users = User.objects.filter(
-            date_joined__gte=week_ago
-        ).order_by('-date_joined')[:10]
+        recent_users = User.objects.filter(date_joined__gte=week_ago).order_by(
+            "-date_joined"
+        )[:10]
 
         # System Alerts (various system conditions that need attention)
         system_alerts = []
 
         # Check for pending job applications (more than 3 days old)
         old_pending_applications = JobApplication.objects.filter(
-            status='pending',
-            created_at__lt=now - timedelta(days=3)
+            status="pending", created_at__lt=now - timedelta(days=3)
         ).count()
         if old_pending_applications > 0:
-            system_alerts.append({
-                "type": "pending_applications",
-                "message": f"{old_pending_applications} job applications pending for more than 3 days",
-                "severity": "medium",
-                "count": old_pending_applications
-            })
+            system_alerts.append(
+                {
+                    "type": "pending_applications",
+                    "message": f"{old_pending_applications} job applications pending for more than 3 days",
+                    "severity": "medium",
+                    "count": old_pending_applications,
+                }
+            )
 
         # Check for expired jobs
         expired_jobs = Job.objects.filter(
-            is_active=True,
-            application_deadline__lt=now.date()
+            is_active=True, application_deadline__lt=now.date()
         ).count()
         if expired_jobs > 0:
-            system_alerts.append({
-                "type": "expired_jobs",
-                "message": f"{expired_jobs} active jobs have expired",
-                "severity": "high",
-                "count": expired_jobs
-            })
+            system_alerts.append(
+                {
+                    "type": "expired_jobs",
+                    "message": f"{expired_jobs} active jobs have expired",
+                    "severity": "high",
+                    "count": expired_jobs,
+                }
+            )
 
         # Check for upcoming events with low registration
         upcoming_events_low_registration = Event.objects.filter(
             is_active=True,
             start_date__gt=now,
             start_date__lte=now + timedelta(days=7),
-            max_participants__isnull=False
+            max_participants__isnull=False,
         )
         for event in upcoming_events_low_registration:
-            registration_rate = event.registration_count / event.max_participants if event.max_participants > 0 else 0
+            registration_rate = (
+                event.registration_count / event.max_participants
+                if event.max_participants > 0
+                else 0
+            )
             if registration_rate < 0.3:  # Less than 30% registered
-                system_alerts.append({
-                    "type": "low_event_registration",
-                    "message": f"Event '{event.title}' has low registration ({event.registration_count}/{event.max_participants})",
-                    "severity": "low",
-                    "event_id": event.id,
-                    "registration_rate": registration_rate
-                })
+                system_alerts.append(
+                    {
+                        "type": "low_event_registration",
+                        "message": f"Event '{event.title}' has low registration ({event.registration_count}/{event.max_participants})",
+                        "severity": "low",
+                        "event_id": event.id,
+                        "registration_rate": registration_rate,
+                    }
+                )
 
         # Check for inactive users (no login for 30+ days)
         inactive_users = User.objects.filter(
-            last_active__lt=now - timedelta(days=30),
-            is_active=True
+            last_active__lt=now - timedelta(days=30), is_active=True
         ).count()
         if inactive_users > 0:
-            system_alerts.append({
-                "type": "inactive_users",
-                "message": f"{inactive_users} users have been inactive for 30+ days",
-                "severity": "low",
-                "count": inactive_users
-            })
+            system_alerts.append(
+                {
+                    "type": "inactive_users",
+                    "message": f"{inactive_users} users have been inactive for 30+ days",
+                    "severity": "low",
+                    "count": inactive_users,
+                }
+            )
 
         # Check for companies without active jobs
-        companies_without_jobs = Company.objects.filter(
-            jobs__isnull=True
-        ).count()
+        companies_without_jobs = Company.objects.filter(jobs__isnull=True).count()
         if companies_without_jobs > 0:
-            system_alerts.append({
-                "type": "companies_without_jobs",
-                "message": f"{companies_without_jobs} companies have no active jobs",
-                "severity": "medium",
-                "count": companies_without_jobs
-            })
+            system_alerts.append(
+                {
+                    "type": "companies_without_jobs",
+                    "message": f"{companies_without_jobs} companies have no active jobs",
+                    "severity": "medium",
+                    "count": companies_without_jobs,
+                }
+            )
 
         dashboard_data = {
             "recent_users": [
@@ -536,7 +509,7 @@ class DashboardInfoEndpoint(APIView):
                 }
                 for user in recent_users
             ],
-            "system_alerts": system_alerts
+            "system_alerts": system_alerts,
         }
 
-        return Response(dashboard_data, status=status.HTTP_200_OK) 
+        return Response(dashboard_data, status=status.HTTP_200_OK)
