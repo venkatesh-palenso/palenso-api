@@ -16,7 +16,6 @@ from sentry_sdk import capture_exception, capture_message
 
 from palenso.db.models import User
 from palenso.api.serializers.people import UserSerializer
-from palenso.db.models import Profile
 from palenso.utils.auth_utils import (
     create_token,
     generate_otp,
@@ -192,9 +191,6 @@ class SignUpEndpoint(APIView):
             token.token = otp
             token.save()
             send_email_verification(user, otp)
-
-            # Create profile
-            Profile.objects.create(user=user)
 
             serialized_user = UserSerializer(user).data
 
@@ -684,6 +680,90 @@ class VerifyMediumEndpoint(APIView):
             )
         except Exception as e:
             print(e)
+            capture_exception(e)
+            return Response(
+                {
+                    "error": "Something went wrong. Please try again later or contact the support team."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class CheckUserExistenceEndpoint(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        try:
+            email = request.data.get("email", False)
+            mobile_number = request.data.get("mobile_number", False)
+
+            if not email and not mobile_number:
+                return Response(
+                    {"error": "Please provide a valid email or mobile number"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            if email and not check_valid_email_address(email):
+                return Response(
+                    {"error": "Please provide a valid email"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+             # Validate mobile number if provided
+            if mobile_number and not check_valid_phone_number(mobile_number):
+                return Response(
+                    {"error": "Please provide a valid mobile number"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user = None
+            medium_used = None
+
+            # Check by email first if provided
+            if email:
+                try:
+                    user = User.objects.get(email=email)
+                    medium_used = "email"
+                except User.DoesNotExist:
+                    pass
+
+            # Check by mobile number if email not found or not provided
+            if not user and mobile_number:
+                try:
+                    user = User.objects.get(mobile_number=mobile_number)
+                    medium_used = "mobile_number"
+                except User.DoesNotExist:
+                    pass
+
+            if user:
+                # User exists
+                response_data = {
+                    "exists": True,
+                    "medium_used": medium_used,
+                    "has_password": True if user.password else False,
+                    "is_active": user.is_active,
+                    "is_email_verified": user.is_email_verified,
+                    "is_mobile_verified": user.is_mobile_verified,
+                    "role": user.role,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                }
+                
+                # Add medium-specific verification status
+                if medium_used == "email":
+                    response_data["is_verified"] = user.is_email_verified
+                elif medium_used == "mobile_number":
+                    response_data["is_verified"] = user.is_mobile_verified
+                
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                # User doesn't exist
+                response_data = {
+                    "exists": False,
+                    "medium_used": medium_used or (email and "email") or (mobile_number and "mobile_number"),
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+        except Exception as e:
             capture_exception(e)
             return Response(
                 {

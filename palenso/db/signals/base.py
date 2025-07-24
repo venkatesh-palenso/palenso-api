@@ -4,7 +4,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-from palenso.db.models import User
+from palenso.db.models import User, Profile
 
 def welcome_mail(
     first_name, to_email, from_email, is_staff
@@ -51,3 +51,10 @@ def send_welcome_email(sender, instance, created, **kwargs):
             from_email,
             is_staff,
         )
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Automatically create a profile when a new user is created"""
+    if created:
+        Profile.objects.get_or_create(user=instance)

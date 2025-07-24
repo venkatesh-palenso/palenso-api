@@ -9,13 +9,13 @@ from django_filters import rest_framework as filters
 from sentry_sdk import capture_exception
 
 from palenso.api.filters.event import EventFilter
-from palenso.api.serializers.event import EventSerializer, EventRegistrationSerializer
+from palenso.api.serializers.event import EventSerializer, EventRegistrationSerializer, AnonymousEventRegistrationSerializer
 from palenso.db.models.event import Event, EventRegistration
 
 
 class EventListCreateEndpoint(APIView):
     def get_permissions(self):
-        if self.request.method == 'GET':
+        if self.request.method == "GET":
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -51,16 +51,22 @@ class EventListCreateEndpoint(APIView):
 
     def post(self, request):
         try:
+            if request.user.role == "student":
+                return Response("Forbidden", status=status.HTTP_403_FORBIDDEN)
             payload = request.data
-            payload["organizer"] = request.user.id
-            if hasattr(request.user, 'company'):
+            if hasattr(request.user, "company"):
                 payload["company"] = request.user.company.id
             serializer = EventSerializer(data=payload)
             if serializer.is_valid():
-                serializer.save(created_by=request.user, updated_by=request.user)
+                serializer.save(
+                    organizer=request.user,
+                    created_by=request.user,
+                    updated_by=request.user,
+                )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print(e)
             capture_exception(e)
             return Response(
                 {"message": "Something went wrong"},
@@ -70,10 +76,10 @@ class EventListCreateEndpoint(APIView):
 
 class EventDetailEndpoint(APIView):
     def get_permissions(self):
-        if self.request.method == 'GET':
+        if self.request.method == "GET":
             return [AllowAny()]
         return [IsAuthenticated()]
-    
+
     def get(self, request, event_id):
         try:
             queryset = Event.objects.get(pk=event_id)
@@ -134,7 +140,7 @@ class EventDetailEndpoint(APIView):
 
 class EventRegistrationListCreateEndpoint(APIView):
     def get_permissions(self):
-        if self.request.method == 'GET':
+        if self.request.method == "GET":
             return [IsAuthenticated()]
         return [AllowAny()]
 
@@ -151,7 +157,7 @@ class EventRegistrationListCreateEndpoint(APIView):
             else:
                 # Student sees their own registrations
                 queryset = EventRegistration.objects.filter(participant=request.user)
-            
+
             serializer = EventRegistrationSerializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -163,14 +169,40 @@ class EventRegistrationListCreateEndpoint(APIView):
 
     def post(self, request):
         try:
-            payload = request.data
+            # Choose serializer based on authentication status
             if request.user.is_authenticated:
+                # Use regular serializer for authenticated users
+                payload = request.data.copy()
                 payload["participant"] = request.user.id
-            serializer = EventRegistrationSerializer(data=payload)
+                serializer = EventRegistrationSerializer(data=payload)
+            else:
+                # Use anonymous serializer for unauthenticated users
+                serializer = AnonymousEventRegistrationSerializer(data=request.data)
+            
             if serializer.is_valid():
-                serializer.save(created_by=request.user if request.user.is_authenticated else None, 
-                              updated_by=request.user if request.user.is_authenticated else None)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                registration = serializer.save(
+                    created_by=request.user if request.user.is_authenticated else None,
+                    updated_by=request.user if request.user.is_authenticated else None,
+                )
+                
+                # Return appropriate response based on authentication status
+                if request.user.is_authenticated:
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                else:
+                    # Return simplified response for anonymous users
+                    response_data = {
+                        "message": "Registration successful!",
+                        "registration_id": registration.id,
+                        "event_title": registration.event.title,
+                        "participant_name": registration.participant.get_full_name(),
+                        "participant_email": registration.participant.email,
+                        "registration_date": registration.registration_date,
+                        "status": registration.status,
+                        "payment_status": registration.payment_status,
+                        "payment_amount": str(registration.payment_amount),
+                    }
+                    return Response(response_data, status=status.HTTP_201_CREATED)
+            
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             capture_exception(e)
@@ -223,7 +255,9 @@ class EventRegistrationDetailEndpoint(APIView):
                 queryset = EventRegistration.objects.get(
                     pk=registration_id, participant=request.user
                 )
-            serializer = EventRegistrationSerializer(queryset, data=request.data, partial=True)
+            serializer = EventRegistrationSerializer(
+                queryset, data=request.data, partial=True
+            )
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
                 return Response(serializer.data, status=status.HTTP_202_ACCEPTED)

@@ -12,6 +12,7 @@ from palenso.api.views.authentication import (
     CheckMediumAvailabilityEndpoint,
     RequestMediumVerificationEndpoint,
     VerifyMediumEndpoint,
+    CheckUserExistenceEndpoint
 )
 from palenso.api.views.people import PeopleView, UserView
 from palenso.api.views.profile import (
@@ -69,6 +70,7 @@ urlpatterns = [
         "auth/request-medium-verification", RequestMediumVerificationEndpoint.as_view()
     ),
     path("auth/verify-medium", VerifyMediumEndpoint.as_view()),
+    path("auth/check-user-existence", CheckUserExistenceEndpoint.as_view()),
     # users
     path("users", PeopleView.as_view()),
     path("users/me", UserView.as_view()),

@@ -20,6 +20,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("role", "admin")
 
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
@@ -95,7 +96,7 @@ class User(AbstractBaseUser, BaseModel):
     token_updated_at = models.DateTimeField(null=True)
 
     USERNAME_FIELD = "username"
-    # REQUIRED_FIELDS = ["email"]
+    REQUIRED_FIELDS = ["email", "first_name", "last_name"]
 
     def __str__(self):
         return self.username
@@ -130,6 +131,9 @@ class User(AbstractBaseUser, BaseModel):
     def has_perms(self, perm_list, obj=None):
         """Return True if the user has each of the specified permissions."""
         return all(self.has_perm(perm, obj) for perm in perm_list)
+    
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}"
 
     @property
     def is_employer(self):
@@ -141,12 +145,35 @@ class User(AbstractBaseUser, BaseModel):
         """Check if employer user has a company profile"""
         if not self.is_employer:
             return False
-        return hasattr(self, 'company') and self.company is not None
+        return hasattr(self, "company") and self.company is not None
 
     @property
     def is_employer_with_company(self):
         """Check if user is an employer and has a company profile"""
         return self.is_employer and self.has_company
+
+    @property
+    def is_dummy_user(self):
+        """Check if this is a dummy user created for anonymous registrations"""
+        return self.username.startswith('anonymous_') or self.is_managed
+
+    @classmethod
+    def create_dummy_user(cls, first_name, last_name, email, mobile_number=''):
+        """Create a dummy user for anonymous event registrations"""
+        import uuid
+        
+        username = f"anonymous_{uuid.uuid4().hex[:8]}"
+        
+        return cls.objects.create(
+            username=username,
+            email=email.lower().strip(),
+            first_name=first_name,
+            last_name=last_name,
+            mobile_number=mobile_number.strip() if mobile_number else '',
+            role='student',
+            is_active=True,
+            is_managed=True,  # Mark as managed/dummy user
+        )
 
 
 class Token(BaseModel):
