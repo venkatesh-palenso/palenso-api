@@ -47,7 +47,7 @@ class Education(BaseModel):
     """User Education History"""
 
     profile = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name="education"
+        Profile, on_delete=models.CASCADE, related_name="educations"
     )
     institution = models.CharField(max_length=200)
     degree = models.CharField(max_length=200)
@@ -70,7 +70,7 @@ class WorkExperience(BaseModel):
     """User Work Experience"""
 
     profile = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name="work_experience"
+        Profile, on_delete=models.CASCADE, related_name="work_experiences"
     )
     company = models.CharField(max_length=200)
     position = models.CharField(max_length=200)

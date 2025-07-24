@@ -100,7 +100,6 @@ class SignInEndpoint(APIView):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            serialized_user = UserSerializer(user).data
             medium = "mobile_number" if mobile_number else "email"
 
             # settings last active for the user
@@ -116,8 +115,7 @@ class SignInEndpoint(APIView):
 
             data = {
                 "access_token": access_token,
-                "refresh_token": refresh_token,
-                "user": serialized_user,
+                "refresh_token": refresh_token
             }
 
             return Response(data, status=status.HTTP_200_OK)
@@ -192,7 +190,7 @@ class SignUpEndpoint(APIView):
             token.save()
             send_email_verification(user, otp)
 
-            serialized_user = UserSerializer(user).data
+            serialized_user = UserInfoSerializer(user).data
 
             data = {
                 "user": serialized_user,
@@ -252,13 +250,11 @@ class SignUpEndpoint(APIView):
             user.token_updated_at = timezone.now()
             user.save()
 
-            serialized_user = UserSerializer(user).data
             access_token, refresh_token = get_tokens_for_user(user)
 
             data = {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
-                "user": serialized_user,
                 "message": "Signup completed successfully.",
             }
 

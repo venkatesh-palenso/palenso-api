@@ -1,32 +1,26 @@
 from rest_framework import serializers
 
-from palenso.db.models.profile import (
-    Education,
-    Interest,
+from palenso.api.serializers.people import UserInfoSerializer
+from palenso.api.serializers.company import CompanySerializer
+
+from palenso.db.models import (
     Profile,
-    Project,
-    Resume,
-    Skill,
+    Education,
     WorkExperience,
+    Skill,
+    Project,
+    Interest,
+    Resume,
 )
-from palenso.db.models.user import User
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    """Serializer for user profile"""
+    """Serializer for profile"""
 
     class Meta:
         model = Profile
         fields = "__all__"
-        read_only_fields = ["user"]
-
-    def to_representation(self, instance):
-        """Custom representation to include profile picture URL"""
-        data = super().to_representation(instance)
-        # If profile_picture_url is empty, return None
-        if not data.get("profile_picture_url"):
-            data["profile_picture_url"] = None
-        return data
+        read_only_fields = ["id", "user"]
 
 
 class EducationSerializer(serializers.ModelSerializer):
@@ -76,58 +70,78 @@ class ResumeSerializer(serializers.ModelSerializer):
         model = Resume
         fields = "__all__"
 
-    def to_representation(self, instance):
-        """Custom representation to include file URL"""
-        data = super().to_representation(instance)
-        # If file_url is empty, return None
-        if not data.get("file_url"):
-            data["file_url"] = None
-        return data
 
-
-class StudentProfileSerializer(serializers.ModelSerializer):
-    """Complete user profile serializer with all related data"""
-
-    profile = ProfileSerializer(read_only=True)
-
-    class Meta:
-        model = User
-        fields = [
-            "id",
-            "username",
-            "email",
-            "mobile_number",
-            "first_name",
-            "last_name",
-            "is_email_verified",
-            "is_mobile_verified",
-            "is_active",
-            "date_joined",
-            "last_active",
-            "profile",
-        ]
-        read_only_fields = ["id", "username", "date_joined", "last_active"]
+class UserProfileSerializer(serializers.Serializer):
+    """Serializer that combines User and Profile data into one flat structure"""
 
     def to_representation(self, instance):
-        """Custom representation to include related data"""
-        data = super().to_representation(instance)
-        if hasattr(instance, "profile") and instance.profile:
-            data["education"] = EducationSerializer(
-                instance.profile.education.all(), many=True
-            ).data
-            data["work_experience"] = WorkExperienceSerializer(
-                instance.profile.work_experience.all(), many=True
-            ).data
-            data["skills"] = SkillSerializer(
-                instance.profile.skills.all(), many=True
-            ).data
-            data["interests"] = InterestSerializer(
-                instance.profile.interests.all(), many=True
-            ).data
-            data["projects"] = ProjectSerializer(
-                instance.profile.projects.all(), many=True
-            ).data
-            data["resumes"] = ResumeSerializer(
-                instance.profile.resumes.all(), many=True
-            ).data
-        return data
+        user_data = UserInfoSerializer(instance).data
+        profile_data = ProfileSerializer(instance.profile).data
+
+        return {
+            "user_id": instance.id,
+            "profile_id": instance.profile.id,
+            **user_data,
+            **profile_data,
+        }
+
+
+class StudentProfileSerializer(serializers.Serializer):
+    """Final serializer with flat user/profile fields and grouped relations"""
+
+    educations = serializers.SerializerMethodField()
+    projects = serializers.SerializerMethodField()
+    experiences = serializers.SerializerMethodField()
+    skills = serializers.SerializerMethodField()
+    interests = serializers.SerializerMethodField()
+    resumes = serializers.SerializerMethodField()
+
+    def to_representation(self, instance):
+        user_data = UserProfileSerializer(instance).data
+        profile = instance.profile
+
+        return {
+            **user_data,
+            "educations": self.get_educations(profile),
+            "projects": self.get_projects(profile),
+            "experiences": self.get_experiences(profile),
+            "skills": self.get_skills(profile),
+            "interests": self.get_interests(profile),
+            "resumes": self.get_resumes(profile),
+        }
+
+    def get_educations(self, profile):
+        return EducationSerializer(profile.educations.all(), many=True).data
+
+    def get_projects(self, profile):
+        return ProjectSerializer(profile.projects.all(), many=True).data
+
+    def get_experiences(self, profile):
+        return WorkExperienceSerializer(profile.work_experiences.all(), many=True).data
+
+    def get_skills(self, profile):
+        return SkillSerializer(profile.skills.all(), many=True).data
+
+    def get_interests(self, profile):
+        return InterestSerializer(profile.interests.all(), many=True).data
+
+    def get_resumes(self, profile):
+        return ResumeSerializer(profile.resumes.all(), many=True).data
+
+
+class EmployerProfileSerializer(serializers.Serializer):
+    """Serializer for employer profile"""
+
+    def to_representation(self, instance):
+        # instance is a User
+        user_data = UserProfileSerializer(instance).data
+        company_data = (
+            CompanySerializer(instance.company).data
+            if hasattr(instance, "company")
+            else None
+        )
+
+        return {
+            **user_data,  # flattened user + profile data
+            "company": company_data,  # nested company data
+        }

@@ -6,16 +6,17 @@ from rest_framework.response import Response
 
 from sentry_sdk import capture_exception
 
-from palenso.api.serializers.people import EmployerSerializer
 from palenso.api.serializers.profile import (
     EducationSerializer,
     InterestSerializer,
-    ProfileSerializer,
     ProjectSerializer,
     ResumeSerializer,
     SkillSerializer,
-    StudentProfileSerializer,
     WorkExperienceSerializer,
+    ProfileSerializer,
+    StudentProfileSerializer,
+    EmployerProfileSerializer,
+    UserProfileSerializer,
 )
 from palenso.db.models import (
     User,
@@ -41,8 +42,10 @@ class ProfileDetailView(APIView):
             if user.role == "student":
                 serializer = StudentProfileSerializer(user)
 
-            if user.role == "employer":
-                serializer = EmployerSerializer(user)
+            elif user.role == "employer":
+                serializer = EmployerProfileSerializer(user)
+            else:
+                serializer = UserProfileSerializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response(

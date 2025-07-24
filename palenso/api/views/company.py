@@ -53,10 +53,9 @@ class CompanyProfileListCreateEndpoint(APIView):
     def post(self, request):
         try:
             payload = request.data
-            payload["employer"] = request.user.id
             serializer = CompanySerializer(data=payload)
             if serializer.is_valid():
-                serializer.save(created_by=request.user, updated_by=request.user)
+                serializer.save(employer=request.user,created_by=request.user, updated_by=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
