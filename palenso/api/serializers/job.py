@@ -6,36 +6,22 @@ from palenso.api.serializers.company import CompanySerializer
 class JobSerializer(serializers.ModelSerializer):
     """Serializer for Job model"""
     company = CompanySerializer(read_only=True)
-    company_id = serializers.IntegerField(write_only=True)
     application_count = serializers.ReadOnlyField()
     is_expired = serializers.ReadOnlyField()
 
     class Meta:
         model = Job
-        fields = [
-            "id", "company", "company_id", "title", "description", "requirements",
-            "responsibilities", "job_type", "experience_level", "location", "is_remote",
-            "salary_min", "salary_max", "salary_currency", "required_skills",
-            "preferred_skills", "category", "application_deadline", "max_applications",
-            "is_active", "is_featured", "application_count", "is_expired",
-            "created_at", "updated_at"
-        ]
+        fields = "__all__"
         read_only_fields = ["id", "created_at", "updated_at", "application_count", "is_expired"]
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):
     """Serializer for JobApplication model"""
-    job = JobSerializer(read_only=True)
-    job_id = serializers.IntegerField(write_only=True)
     applicant_name = serializers.CharField(source="applicant.get_full_name", read_only=True)
 
     class Meta:
         model = JobApplication
-        fields = [
-            "id", "job", "job_id", "applicant", "applicant_name", "cover_letter",
-            "resume", "status", "expected_salary", "available_from", "notes",
-            "employer_notes", "created_at", "updated_at"
-        ]
+        fields = "__all__"
         read_only_fields = ["id", "applicant", "created_at", "updated_at"]
 
 

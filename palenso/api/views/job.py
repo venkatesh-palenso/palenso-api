@@ -63,10 +63,9 @@ class JobListCreateEndpoint(APIView):
                 )
             
             payload = request.data
-            payload["company"] = request.user.company.id
             serializer = JobSerializer(data=payload)
             if serializer.is_valid():
-                serializer.save(created_by=request.user, updated_by=request.user)
+                serializer.save(company=request.user.company,created_by=request.user, updated_by=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -168,10 +167,9 @@ class JobApplicationListCreateEndpoint(APIView):
     def post(self, request):
         try:
             payload = request.data
-            payload["applicant"] = request.user.id
             serializer = JobApplicationSerializer(data=payload)
             if serializer.is_valid():
-                serializer.save(created_by=request.user, updated_by=request.user)
+                serializer.save(applicant=request.user,created_by=request.user, updated_by=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
