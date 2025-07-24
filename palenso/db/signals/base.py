@@ -38,19 +38,19 @@ def welcome_mail(
     return
 
 
-@receiver(post_save, sender=User)
-def send_welcome_email(sender, instance, created, **kwargs):
-    if created:
-        first_name = instance.first_name.capitalize()
-        to_email = instance.email
-        from_email = "palenso <rahul@palenso.com>"
-        is_staff = instance.is_staff
-        welcome_mail(
-            first_name,
-            to_email,
-            from_email,
-            is_staff,
-        )
+# @receiver(post_save, sender=User)
+# def send_welcome_email(sender, instance, created, **kwargs):
+#     if created:
+#         first_name = instance.first_name.capitalize()
+#         to_email = instance.email
+#         from_email = "palenso <rahul@palenso.com>"
+#         is_staff = instance.is_staff
+#         welcome_mail(
+#             first_name,
+#             to_email,
+#             from_email,
+#             is_staff,
+#         )
 
 
 @receiver(post_save, sender=User)
