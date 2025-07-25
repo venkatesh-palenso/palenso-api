@@ -15,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from sentry_sdk import capture_exception, capture_message
 
 from palenso.db.models import User
-from palenso.api.serializers.people import UserSerializer
+from palenso.api.serializers.people import UserInfoSerializer, UserSerializer
 from palenso.utils.auth_utils import (
     create_token,
     generate_otp,
@@ -113,10 +113,7 @@ class SignInEndpoint(APIView):
 
             access_token, refresh_token = get_tokens_for_user(user)
 
-            data = {
-                "access_token": access_token,
-                "refresh_token": refresh_token
-            }
+            data = {"access_token": access_token, "refresh_token": refresh_token}
 
             return Response(data, status=status.HTTP_200_OK)
 
@@ -698,14 +695,14 @@ class CheckUserExistenceEndpoint(APIView):
                     {"error": "Please provide a valid email or mobile number"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            
+
             if email and not check_valid_email_address(email):
                 return Response(
                     {"error": "Please provide a valid email"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-             # Validate mobile number if provided
+            # Validate mobile number if provided
             if mobile_number and not check_valid_phone_number(mobile_number):
                 return Response(
                     {"error": "Please provide a valid mobile number"},
@@ -744,19 +741,21 @@ class CheckUserExistenceEndpoint(APIView):
                     "first_name": user.first_name,
                     "last_name": user.last_name,
                 }
-                
+
                 # Add medium-specific verification status
                 if medium_used == "email":
                     response_data["is_verified"] = user.is_email_verified
                 elif medium_used == "mobile_number":
                     response_data["is_verified"] = user.is_mobile_verified
-                
+
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
                 # User doesn't exist
                 response_data = {
                     "exists": False,
-                    "medium_used": medium_used or (email and "email") or (mobile_number and "mobile_number"),
+                    "medium_used": medium_used
+                    or (email and "email")
+                    or (mobile_number and "mobile_number"),
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
